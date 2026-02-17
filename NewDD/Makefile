@@ -8,6 +8,8 @@
 #--------------------------------------------------
 CC = mpiicx
 OPT = -g -DNENER=0 -DNPRE=8 -DNMEG=20000 -DWGROUPSIZE=5  -DUSE_MPI -DQUADHILBERT -DREAD_SINK -DNCHEM=9 -DNDUST=4 -DDEBUG=1 -DLOG=1
+FORMAT_OPT ?=
+OPT += $(FORMAT_OPT)
 
 RANLIB = ranlib
 
@@ -22,6 +24,14 @@ NEWDD	= newdd.exe
 NEWDDOBJ	= newdd.o
 
 INCLUDES = -I./ -I../
+HDF5_DIR ?= /usr/local
+HDF5_INC = -I$(HDF5_DIR)/include
+HDF5_LIB = -L$(HDF5_DIR)/lib -lhdf5
+
+ifneq (,$(findstring -DGADGET_HDF5,$(OPT)))
+TIMEROBJ += rd_gadget.o
+INCLUDES += $(HDF5_INC)
+endif
 
 default:
 	$(MAKE) $(LIBS)
@@ -46,6 +56,9 @@ $(LIBS): $(TIMEROBJ)
 	ranlib $@
 
 OSTLIB = -L. -lmyram  -L/home/kjhan/local/lib -lm
+ifneq (,$(findstring -DGADGET_HDF5,$(OPT)))
+OSTLIB += $(HDF5_LIB)
+endif
 
 %.c:
 	$(CC) $(CFLAGS) -c $*.c

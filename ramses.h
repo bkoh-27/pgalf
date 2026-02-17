@@ -185,6 +185,7 @@ typedef struct RamsesType{
 	int npart, nsink,nleafcell,ngas;
 	int nindsink;
 	int ncpu, icpu, ndim, nthr;
+	int nfiles;
 	int nrestart,nrestart_quad;
 	int localseed[IRandNumSize];
 	 int  nstar_tot;
@@ -233,6 +234,27 @@ typedef struct RamsesType{
 	int ramses_sizeof;
 
 }RamsesType;
+
+#ifdef GADGET_HDF5
+typedef struct GadgetHeaderType{
+	long long npart[6];
+	double mass[6];
+	double time;
+	double redshift;
+	double boxsize;
+	int nfiles;
+	double omega0;
+	double omegalambda;
+	double hubble;
+	double unit_length;
+	double unit_mass;
+	double unit_velocity;
+	int flag_sfr;
+	int flag_cooling;
+	int flag_stellarage;
+	int flag_metals;
+}GadgetHeaderType;
+#endif
 
 
 /*
@@ -314,6 +336,14 @@ void rd_info(RamsesType *, char *);
 int find_leaf(RamsesType *, int, char *);
 int find_leaf_gas(RamsesType *, int, char *);
 void GetHydroQ(RamsesType *, int *, int , HydroCellType *);
+
+#ifdef GADGET_HDF5
+int rd_gadget_info(RamsesType *, char *, int);
+int rd_gadget_particles(RamsesType *, char *, int);
+int rd_gadget_gas(RamsesType *, char *, int);
+int rd_gadget_bh(RamsesType *, char *, int);
+void gadget_units(RamsesType *, GadgetHeaderType *);
+#endif
 
 void cleanup_mesh(RamsesType*, int);
 void cleanup_ramses(RamsesType*);

@@ -45,21 +45,117 @@ int nid=1, myid=0;
 
 
 int main(int argc, char **argv){
-	size_t i,j,k;
-	FILE *fp;
+	size_t i;
 	char infile[190];
+	char basename[256];
 	RamsesType ram;
 	int istep, icpu;
 	int WGroupSize = WGROUPSIZE;
 	int sinmul,nsplit;
 	int ileaf =0;
+	int ifile;
+
+	if(argc < 3){
+		fprintf(stderr, "Usage: %s <istep> <nsplit>\n", argv[0]);
+		return 1;
+	}
+
 	istep = atoi(argv[1]);
 	nsplit = atoi(argv[2]);
 	(void) Make_Total_Memory();
+	memset(&ram, 0, sizeof(RamsesType));
 
+#ifdef GADGET_HDF5
+	sprintf(basename,"./snapdir_%03d/snapshot_%03d", istep, istep);
+	if(rd_gadget_info(&ram, basename, 0) != 0){
+		sprintf(basename,"./snapshot_%03d", istep);
+		if(rd_gadget_info(&ram, basename, 0) != 0){
+			fprintf(stderr, "Failed to locate snapshot base for step %d\n", istep);
+			return 2;
+		}
+	}
+
+#ifdef USE_MPI
+	MPI_Init(&argc, &argv);
+	MPI_Comm_rank(MPI_COMM_WORLD,&myid);
+	MPI_Comm_size(MPI_COMM_WORLD,&nid);
+	if(myid != 0){
+		MPI_Finalize();
+		return 0;
+	}
+#endif
+
+	sinmul = 0;
+	printf("GADGET mode: reading base '%s' with %d file(s)\n", basename, ram.nfiles);
+	for(ifile=0;ifile<ram.nfiles;ifile++){
+		printf("P%d: Reading snapshot file index %d\n", myid, ifile);
+		rd_gadget_particles(&ram, basename, ifile);
+		rd_gadget_gas(&ram, basename, ifile);
+		rd_gadget_bh(&ram, basename, ifile);
+
+		if(ram.ngas > 0 && ram.gas != NULL){
+			qsort(ram.gas, ram.ngas, sizeof(GasType), gassortx);
+			SplitDump(&ram, ram.gas, ram.ngas, GAS, istep, ifile+1, sinmul, nsplit);
+			Free(ram.gas);
+			ram.gas = NULL;
+			ram.ngas = 0;
+		}
+
+#ifdef READ_SINK
+		if(ram.nsink > 0 && ram.sink != NULL){
+			qsort(ram.sink, ram.nsink, sizeof(SinkType), sinksortx);
+			SplitDump(&ram, ram.sink, ram.nsink, SINK, istep, ifile+1, sinmul, nsplit);
+			Free(ram.sink);
+			ram.sink = NULL;
+			ram.nsink = 0;
+		}
+#endif
+
+		if(ram.npart > 0 && ram.particle != NULL){
+			DmType *dm;
+			size_t ndm = 0;
+			size_t nstar = 0;
+			StarType *star;
+
+			dm = (DmType*)Malloc(sizeof(DmType)*ram.npart, PPTR(dm));
+			for(i=0;i<(size_t)ram.npart;i++){
+				if((ram.particle)[i].family ==1) {
+					dm[ndm] = ((DmType*)(ram.particle))[i];
+					ndm ++;
+				}
+			}
+			if(ndm > 0){
+				qsort(dm, ndm, sizeof(DmType), dmsortx);
+				SplitDump(&ram, dm, (int)ndm, DM, istep, ifile+1, sinmul, nsplit);
+			}
+
+			star = (StarType*)dm;
+			for(i=0;i<(size_t)ram.npart;i++){
+				if((ram.particle)[i].family == 2) {
+					star[nstar] = ((StarType*)(ram.particle))[i];
+					nstar ++;
+				}
+			}
+			if(nstar > 0){
+				qsort(star, nstar, sizeof(StarType), starsortx);
+				SplitDump(&ram, star, (int)nstar, STAR, istep, ifile+1, sinmul, nsplit);
+			}
+
+			Free(dm);
+			Free(ram.particle);
+			ram.particle = NULL;
+			ram.npart = 0;
+		}
+		printf("Current memory stack %lld\n", CurMemStack());fflush(stdout);
+	}
+
+#ifdef USE_MPI
+	MPI_Finalize();
+#endif
+	return 0;
+
+#else
 	sprintf(infile,"./output_%.5d/info_%.5d.txt", istep,istep);
-
-
 
 #ifdef USE_MPI
 	MPI_Init(&argc, &argv);
@@ -97,14 +193,6 @@ int main(int argc, char **argv){
 	for(icpu=1;icpu<=ram.ncpu;icpu++)
 #endif
 	{
-		/*
-		Wait2Start(WGroupSize);
-#ifdef USE_MPI
-		printf("P%d is at %d  and has a range of %d and %d\n",myid, icpu,mystart,myfinal);
-#endif
-		Wait2Go(WGroupSize);
-		*/
-
 		sprintf(infile,"./output_%.5d/amr_%.5d.out%.5d", istep, istep, icpu);
 		Wait2Start(WGroupSize);
 		printf("P%d: Opening %s\n", myid, infile);fflush(stdout);
@@ -131,23 +219,12 @@ int main(int argc, char **argv){
 
 		printf("P%d stage 3 done \n",myid);
 
-/*		sprintf(infile,"./output_%.5d/grav_%.5d.out%.5d", istep, istep, icpu);
-		Wait2Start(WGroupSize);
-		printf("P%d: Opening %s\n", myid, infile);fflush(stdout);
-		rd_grav(&ram, infile);
-		Wait2Go(WGroupSize);*/
-
 
 		printf("P%d stage 4 done \n",myid);
 
 		printf("P%d has scale_d %g\n", myid, ram.scale_d);
 
 		sprintf(infile,"./output_%.5d/LeafCells_%.5d.out%.5d", istep, istep, icpu);
-		/*
-		find_leaf(&ram, icpu, infile);
-		qsort(ram.hcell, ram.nleafcell, sizeof(HydroCellType), hcellsortx);
-		SplitDump(&ram, ram.hcell, ram.nleafcell,HCELL, istep, icpu,sinmul, nsplit);
-		*/
 		find_leaf_gas(&ram, icpu, infile);
 		qsort(ram.gas, ram.ngas, sizeof(GasType), gassortx);
 		SplitDump(&ram, ram.gas, ram.ngas,GAS, istep, icpu,sinmul, nsplit);
@@ -171,7 +248,9 @@ int main(int argc, char **argv){
 		{
 			DmType *dm = (DmType*)Malloc(sizeof(DmType)*ram.npart, PPTR(dm));
 			size_t ndm = 0;
-			for(i=0;i<ram.npart;i++){
+			size_t nstar = 0;
+			StarType *star;
+			for(i=0;i<(size_t)ram.npart;i++){
 				if((ram.particle)[i].family ==1) {
 					dm[ndm] = ((DmType*)(ram.particle))[i];
 					ndm ++;
@@ -180,26 +259,23 @@ int main(int argc, char **argv){
 			
 			qsort(dm, ndm, sizeof(DmType), dmsortx);
 			printf("P%d End of sorting %zu dm\n", myid, ndm);
-			SplitDump(&ram, dm, ndm, DM, istep, icpu,sinmul, nsplit);
+			SplitDump(&ram, dm, (int)ndm, DM, istep, icpu,sinmul, nsplit);
 
-		printf("P%d stage 7 done \n",myid);
+			printf("P%d stage 7 done \n",myid);
 
 
-			size_t nstar = 0;
-			StarType *star = (StarType*)dm;
-			for(i=0;i<ram.npart;i++){
+			star = (StarType*)dm;
+			for(i=0;i<(size_t)ram.npart;i++){
 				if((ram.particle)[i].family == 2) {
 					star[nstar] = ((StarType*)(ram.particle))[i];
 					nstar ++;
 				}
 			}
 
-		printf("P%d stage 8 done \n",myid);
-		//	if(nstar > 0){
-				qsort(star, nstar, sizeof(StarType), starsortx);
-				printf("P%d End of sorting %zu star\n", myid, nstar);
-				SplitDump(&ram, star, nstar,STAR, istep, icpu,sinmul, nsplit);
-		//	}
+			printf("P%d stage 8 done \n",myid);
+			qsort(star, nstar, sizeof(StarType), starsortx);
+			printf("P%d End of sorting %zu star\n", myid, nstar);
+			SplitDump(&ram, star, (int)nstar,STAR, istep, icpu,sinmul, nsplit);
 			Free(dm);
 	
 		}
@@ -217,4 +293,5 @@ int main(int argc, char **argv){
 	MPI_Finalize();
 #endif
 	return 0;
+#endif
 }

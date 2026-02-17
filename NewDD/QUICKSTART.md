@@ -154,6 +154,7 @@ size = num_particles * sizeof(DmType)
 2. **Configuration**: See [CONFIGURATION.md](CONFIGURATION.md) for tuning options
 3. **Pipeline Integration**: See [PIPELINE.md](PIPELINE.md) for downstream tools
 4. **GADGET Support**: See [README4GADGET.md](README4GADGET.md) for GADGET adaptation
+5. **SWIFT/GADGET Runbook**: See [SWIFT_GADGET.md](SWIFT_GADGET.md) for build/run commands used in this repo
 
 ---
 

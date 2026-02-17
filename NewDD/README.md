@@ -12,6 +12,7 @@ A tool for reading RAMSES simulation snapshot data and decomposing the domain in
 | [CONFIGURATION.md](CONFIGURATION.md) | Advanced configuration options |
 | [PIPELINE.md](PIPELINE.md) | PGalF pipeline integration guide |
 | [README4GADGET.md](README4GADGET.md) | GADGET HDF5 adaptation guide |
+| [SWIFT_GADGET.md](SWIFT_GADGET.md) | Implemented SWIFT/GADGET HDF5 usage guide |
 
 ---
 
