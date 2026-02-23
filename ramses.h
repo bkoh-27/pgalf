@@ -1,4 +1,6 @@
 /* This is a header file to read RAMSES data in C. */
+#ifndef RAMSES_H
+#define RAMSES_H
 
 /* You have to read these lines carefully before running it */
 #define NDIM 3
@@ -237,7 +239,7 @@ typedef struct RamsesType{
 
 #ifdef GADGET_HDF5
 typedef struct GadgetHeaderType{
-	long long npart[6];
+	int npart[6];
 	double mass[6];
 	double time;
 	double redshift;
@@ -253,6 +255,7 @@ typedef struct GadgetHeaderType{
 	int flag_cooling;
 	int flag_stellarage;
 	int flag_metals;
+	int is_swift;
 }GadgetHeaderType;
 #endif
 
@@ -359,3 +362,5 @@ int starsortx(const void*, const void*);
 int dmsortx(const void*, const void*);
 void units(RamsesType *);
 void mkfolder(char *);
+
+#endif /* RAMSES_H */

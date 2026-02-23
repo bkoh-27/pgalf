@@ -17,6 +17,11 @@
 #include "hfind.h"
 #include "galcenter.h"
 
+#define REQUIRED_OMEGA_M 0.3f
+#define REQUIRED_OMEGA_B 0.049f
+#define REQUIRED_H0 67.11f
+#define REQUIRED_OMEGA_L 0.7f
+
 FoFTPtlStruct *rbuffer;
 
 
@@ -208,6 +213,10 @@ int main(int argc, char *argv[]) {
 			fread(&omep,sizeof(float),1,rhfp);
 			fread(&omepb,sizeof(float),1,rhfp);
 			fread(&omeplam,sizeof(float),1,rhfp);
+			omep = REQUIRED_OMEGA_M;
+			omepb = REQUIRED_OMEGA_B;
+			omeplam = REQUIRED_OMEGA_L;
+			hubble = REQUIRED_H0;
 			fread(&amax,sizeof(float),1,rhfp);
 			fread(&anow,sizeof(float),1,rhfp);
 			ng = nx;

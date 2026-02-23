@@ -417,23 +417,28 @@ int finddenpeak(float *den,int numneigh,long long *neighbor,int np,
 		Coretype **Core, int jflag, SimpleBasicParticleType *bp){
 	Coretype *core = *Core;
 	long long i,j,k;
+	long long n_above = 0, n_reject_higher = 0, n_localmax = 0;
+	float peak_thr = PEAKTHRESHOLD;
 	float *me,*you;
 	int iflag;
 	numcore = 0;
 	DEBUGPRINT("Now before finddenpeak with %d particles with flag= %d\n", np,jflag);
 	if(jflag == 1){
 		for(i=0;i<np;i++){
-			if(den[i] > PEAKTHRESHOLD && bp[i].type == TYPE_STAR)
+			if(den[i] > peak_thr && bp[i].type == TYPE_STAR)
 			{
+				n_above ++;
 				iflag = 1;
 				k = i*numneigh;
 				for(j=0;j<numneigh;j++){
 					if(den[neighbor[k+j]] > den[i]) {
 						iflag = 0;
+						n_reject_higher ++;
 						break;
 					}
 				}
 				if(iflag == 1){
+					n_localmax ++;
 					core[numcore].peak = i;
 					core[numcore].cx = bp[i].x;
 					core[numcore].cy = bp[i].y;
@@ -454,17 +459,20 @@ int finddenpeak(float *den,int numneigh,long long *neighbor,int np,
 	}
 	else {
 		for(i=0;i<np;i++){
-			if(den[i] > PEAKTHRESHOLD)
+			if(den[i] > peak_thr)
 			{
+				n_above ++;
 				iflag = 1;
 				k = i*numneigh;
 				for(j=0;j<numneigh;j++){
 					if(den[neighbor[k+j]] > den[i]) {
 						iflag = 0;
+						n_reject_higher ++;
 						break;
 					}
 				}
 				if(iflag == 1){
+					n_localmax ++;
 					if(numcore >= MAXNUMCORE){
 						fprintf(stderr,"Error exceeding the number of cores: %d :: %lld   %d   \n", numcore, i, np);
 						exit(999);
@@ -486,6 +494,8 @@ int finddenpeak(float *den,int numneigh,long long *neighbor,int np,
 		}
 	}
 	DEBUGPRINT("Now before merging peak. numcore= %d\n", numcore);
+	LOGPRINT("FINDDENPEAK_DIAG jflag=%d np=%d peak_thr=%g above=%lld localmax=%lld reject_higher=%lld numcore=%d\n",
+			jflag, np, peak_thr, n_above, n_localmax, n_reject_higher, numcore);
 //	if(numcore > 10) numcore = MergingPeak(bp,np,core,numcore,0);
 	DEBUGPRINT("Now after merging peak\n");
 	return numcore;
@@ -2864,7 +2874,8 @@ int subhalo_den(FoFTPtlStruct *rbp, lint np,lint *p2halo){
 	float xmax,ymax,zmax;
 	long long *neighbor;
 	int NumNeighbor,numcore;
-	float dthreshold;
+	int star_num, use_all_path;
+	float dthreshold, star_mass;
 	float *density;
 	Kptype *kp,*skp,*tkp;
 	Coretype *core;
@@ -2882,8 +2893,11 @@ int subhalo_den(FoFTPtlStruct *rbp, lint np,lint *p2halo){
 	if(1){
 		mklocalize(bp,np,&xinit,&yinit, &zinit,&xmax,&ymax,&zmax);
 	}
+	star_num = findstarnum(bp,np);
+	star_mass = findstarmass(bp,np);
+	use_all_path = (star_num <= NUMNEIGHBOR || star_mass < MINSTELLARMASS);
 	{
-		if(findstarnum(bp,np)<= NUMNEIGHBOR || findstarmass(bp,np)<MINSTELLARMASS){
+		if(use_all_path){
 			/*
 			neighbor = (int*)Malloc(sizeof(int)*np*NumNeighbor,PPTR(neighbor));
 			density = (float*)Malloc(sizeof(float)*np,PPTR(density));
@@ -2918,6 +2932,9 @@ int subhalo_den(FoFTPtlStruct *rbp, lint np,lint *p2halo){
 #endif
 		}
 		DEBUGPRINT("density calculates\n");
+		LOGPRINT("SUBHALO_DIAG np=%lld star_num=%d star_mass=%g branch=%s numcore=%d\n",
+				(long long)np, star_num, star_mass,
+				use_all_path ? "TYPE_ALL" : "TYPE_STAR", numcore);
 	}
 	{
 		DEBUGPRINT("%d numcore detected\n",numcore);
@@ -2927,18 +2944,13 @@ int subhalo_den(FoFTPtlStruct *rbp, lint np,lint *p2halo){
 		wp = (WorkingParticle *)Malloc(sizeof(WorkingParticle)*np,PPTR(wp));
 	}
 	if(numcore == 0) {
-		/*
-#ifdef NOBACKGROUND
-		for(i=0;i<np;i++){
-			p2halo[i] = 0;
-		}
-#endif
-		Free(wp);Free(density);Free(neighbor);
-		Free(bp);
+		/* No density peak means no detected subhalo for this FoF halo. */
+		LOGPRINT("SUBHALO_ZERO_CORE np=%lld star_num=%d star_mass=%g low_star_num=%d low_star_mass=%d branch=%s\n",
+				(long long)np, star_num, star_mass,
+				(star_num <= NUMNEIGHBOR), (star_mass < MINSTELLARMASS),
+				use_all_path ? "TYPE_ALL" : "TYPE_STAR");
+		for(i=0;i<np;i++) p2halo[i] = NOT_HALO_MEMBER;
 		return 0;
-		*/
-		for(i=0;i<np;i++) p2halo[i] = 0;
-		return 1;
 	}
 renumcore :
 	if(numcore ==1) {

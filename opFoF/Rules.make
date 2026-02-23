@@ -15,11 +15,11 @@ RANLIB = ranlib
 ####      KIAS PG Compiler                          #####
 #########################################################
 AR = ar rcv
-FC = mpiifc
-CC = mpiicc
-F90C = mpiifort
+FC = mpiifx
+CC = mpiicx
+F90C = mpiifx
 #OPT = -DPGCC -mcmodel=medium -tp nehalem-64 -fast -mp -fastsse
-OPT = -DINTEL -g
+OPT = -DINTEL -g -fcommon
 
 INCLUDES = 
 

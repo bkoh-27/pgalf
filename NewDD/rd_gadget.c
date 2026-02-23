@@ -9,6 +9,7 @@
 
 #include "ramses.h"
 #include "Memory.h"
+#include "rd_gadget.h"
 
 #ifdef GADGET_HDF5
 
@@ -46,6 +47,16 @@ static int read_attr_int(hid_t obj_id, const char *name, int *value){
 	attr_id = H5Aopen(obj_id, name, H5P_DEFAULT);
 	if(attr_id < 0) return -1;
 	H5Aread(attr_id, H5T_NATIVE_INT, value);
+	H5Aclose(attr_id);
+	return 0;
+}
+
+static int read_attr_int_array(hid_t obj_id, const char *name, int *values){
+	hid_t attr_id;
+	if(!attr_exists(obj_id, name)) return -1;
+	attr_id = H5Aopen(obj_id, name, H5P_DEFAULT);
+	if(attr_id < 0) return -1;
+	H5Aread(attr_id, H5T_NATIVE_INT, values);
 	H5Aclose(attr_id);
 	return 0;
 }
@@ -193,6 +204,28 @@ static size_t part_count_from_coords(hid_t file_id, const char *group_name){
 	return n;
 }
 
+int gadget_get_nfiles(char *basename){
+	char filename[512];
+	hid_t file_id, header_id;
+	int nfiles = 1;
+
+	if(open_snapshot_file(basename, 0, filename, sizeof(filename), &file_id) != 0)
+		return -1;
+
+	header_id = H5Gopen2(file_id, "Header", H5P_DEFAULT);
+	if(header_id >= 0){
+		read_attr_int(header_id, "NumFilesPerSnapshot", &nfiles);
+		H5Gclose(header_id);
+	}
+	H5Fclose(file_id);
+	if(nfiles < 1) nfiles = 1;
+	return nfiles;
+}
+
+int gadget_check_dataset(hid_t group_id, const char *name){
+	return dataset_exists(group_id, name);
+}
+
 void gadget_units(RamsesType *ram, GadgetHeaderType *header){
 	double a = header->time;
 	double h = header->hubble;
@@ -211,7 +244,9 @@ void gadget_units(RamsesType *ram, GadgetHeaderType *header){
 	ram->scale_m = header->unit_mass / Msun * h;
 	ram->scale_T2 = (gamma - 1.0) * (header->unit_velocity * header->unit_velocity) * mu * mH / kB;
 	ram->mpcscale_l = header->unit_length / Mpc * h;
-	ram->kmscale_v = header->unit_velocity / 1.0e5 * sqrt(a);
+	/* GADGET stores v_pec/sqrt(a); SWIFT stores physical peculiar velocity directly */
+	ram->kmscale_v = header->is_swift ? header->unit_velocity / 1.0e5
+	                                  : header->unit_velocity / 1.0e5 * sqrt(a);
 	ram->scale_Gyr = ram->scale_t / oneyear / 1.0e9;
 }
 
@@ -241,11 +276,34 @@ int rd_gadget_info(RamsesType *ram, char *basename, int ifile){
 		return -1;
 	}
 
-	read_attr_ll_array(header_id, "NumPart_ThisFile", header.npart);
-	read_attr_double_array(header_id, "MassTable", header.mass);
+	/* NumPart_ThisFile: GADGET=6×int32, SWIFT=7×int64 — read into 7-element buffer */
+	{
+		long long tmp_npart[7] = {0,0,0,0,0,0,0};
+		read_attr_ll_array(header_id, "NumPart_ThisFile", tmp_npart);
+		for(i=0;i<6;i++) header.npart[i] = (int)tmp_npart[i];
+	}
+	/* MassTable: SWIFT may have 7 elements — use temp buffer to avoid overflow */
+	{
+		double tmp_mass[8] = {0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0};
+		read_attr_double_array(header_id, "MassTable", tmp_mass);
+		for(i=0;i<6;i++) header.mass[i] = tmp_mass[i];
+	}
+	/* Time/Scale-factor: GADGET uses "Time" as scale factor;
+	   SWIFT "Time" is an internal coordinate — use "Scale-factor" instead */
 	read_attr_double(header_id, "Time", &header.time);
+	{
+		double aexp_sw = 0.0;
+		if(read_attr_double(header_id, "Scale-factor", &aexp_sw) == 0
+		   && aexp_sw > 0.0 && aexp_sw <= 2.0)
+			header.time = aexp_sw;
+	}
 	read_attr_double(header_id, "Redshift", &header.redshift);
-	read_attr_double(header_id, "BoxSize", &header.boxsize);
+	/* BoxSize: scalar in GADGET, 3-element array in SWIFT */
+	{
+		double tmp_box[3] = {0.0, 0.0, 0.0};
+		read_attr_double_array(header_id, "BoxSize", tmp_box);
+		header.boxsize = tmp_box[0];
+	}
 	read_attr_int(header_id, "NumFilesPerSnapshot", &header.nfiles);
 	read_attr_double(header_id, "Omega0", &header.omega0);
 	read_attr_double(header_id, "OmegaLambda", &header.omegalambda);
@@ -254,11 +312,31 @@ int rd_gadget_info(RamsesType *ram, char *basename, int ifile){
 	read_attr_int(header_id, "Flag_Cooling", &header.flag_cooling);
 	read_attr_int(header_id, "Flag_StellarAge", &header.flag_stellarage);
 	read_attr_int(header_id, "Flag_Metals", &header.flag_metals);
+	/* Units: GADGET stores in Header; SWIFT uses InternalCodeUnits group */
 	read_attr_double(header_id, "UnitLength_in_cm", &header.unit_length);
 	read_attr_double(header_id, "UnitMass_in_g", &header.unit_mass);
 	read_attr_double(header_id, "UnitVelocity_in_cm_per_s", &header.unit_velocity);
 
 	H5Gclose(header_id);
+
+	/* SWIFT: read physical unit system from InternalCodeUnits group */
+	header.is_swift = 0;
+	if(H5Lexists(file_id, "InternalCodeUnits", H5P_DEFAULT) > 0){
+		hid_t units_id = H5Gopen2(file_id, "InternalCodeUnits", H5P_DEFAULT);
+		if(units_id >= 0){
+			double U_L = 0.0, U_M = 0.0, U_t = 0.0;
+			read_attr_double(units_id, "Unit length in cgs (U_L)", &U_L);
+			read_attr_double(units_id, "Unit mass in cgs (U_M)", &U_M);
+			read_attr_double(units_id, "Unit time in cgs (U_t)", &U_t);
+			H5Gclose(units_id);
+			if(U_L > 0.0 && U_M > 0.0 && U_t > 0.0){
+				header.unit_length   = U_L;
+				header.unit_mass     = U_M;
+				header.unit_velocity = U_L / U_t;
+				header.is_swift = 1;
+			}
+		}
+	}
 	H5Fclose(file_id);
 
 	if(header.nfiles < 1) header.nfiles = 1;
@@ -289,7 +367,7 @@ int rd_gadget_info(RamsesType *ram, char *basename, int ifile){
 int rd_gadget_particles(RamsesType *ram, char *basename, int ifile){
 	char filename[512];
 	hid_t file_id, header_id;
-	double mass_table[GADGET_NTYPE];
+	double mass_table[8];
 	size_t ndm, nstar, npart;
 	PmType *particle;
 	size_t ip, i;
@@ -297,7 +375,7 @@ int rd_gadget_particles(RamsesType *ram, char *basename, int ifile){
 	const int ptypes_star[1] = {4};
 	int it;
 
-	for(i=0;i<GADGET_NTYPE;i++) mass_table[i] = 0.0;
+	for(i=0;i<8;i++) mass_table[i] = 0.0;
 
 	if(open_snapshot_file(basename, ifile, filename, sizeof(filename), &file_id) != 0){
 		ERRORPRINT("Cannot open particle file from base '%s' at file %d\n", basename, ifile);
@@ -415,10 +493,14 @@ int rd_gadget_particles(RamsesType *ram, char *basename, int ifile){
 		else for(i=0;i<n;i++) m[i] = mass_table[ptype];
 		if(dataset_exists(gid, "StellarFormationTime"))
 			read_dataset_double_1d(gid, "StellarFormationTime", n, tform);
+		else if(dataset_exists(gid, "BirthScaleFactors"))
+			read_dataset_double_1d(gid, "BirthScaleFactors", n, tform);
 		else
 			for(i=0;i<n;i++) tform[i] = 0.0;
 		if(dataset_exists(gid, "Metallicity"))
 			read_dataset_first_component(gid, "Metallicity", n, zmet);
+		else if(dataset_exists(gid, "MetalMassFractions"))
+			read_dataset_first_component(gid, "MetalMassFractions", n, zmet);
 		else
 			for(i=0;i<n;i++) zmet[i] = 0.0;
 
@@ -455,12 +537,12 @@ int rd_gadget_particles(RamsesType *ram, char *basename, int ifile){
 int rd_gadget_gas(RamsesType *ram, char *basename, int ifile){
 	char filename[512];
 	hid_t file_id, header_id, gid;
-	double mass_table[GADGET_NTYPE];
+	double mass_table[8];
 	size_t n, i;
 	double *x,*y,*z,*vx,*vy,*vz,*m,*rho,*u,*hsml,*zmet;
 	GasType *gas;
 
-	for(i=0;i<GADGET_NTYPE;i++) mass_table[i] = 0.0;
+	for(i=0;i<8;i++) mass_table[i] = 0.0;
 
 	if(open_snapshot_file(basename, ifile, filename, sizeof(filename), &file_id) != 0){
 		ERRORPRINT("Cannot open gas file from base '%s' at file %d\n", basename, ifile);
@@ -500,16 +582,28 @@ int rd_gadget_gas(RamsesType *ram, char *basename, int ifile){
 	if(dataset_exists(gid, "Masses")) read_dataset_double_1d(gid, "Masses", n, m);
 	else for(i=0;i<n;i++) m[i] = mass_table[0];
 
-	if(dataset_exists(gid, "Density")) read_dataset_double_1d(gid, "Density", n, rho);
+	if(dataset_exists(gid, "Density"))
+		read_dataset_double_1d(gid, "Density", n, rho);
+	else if(dataset_exists(gid, "Densities"))
+		read_dataset_double_1d(gid, "Densities", n, rho);
 	else for(i=0;i<n;i++) rho[i] = 0.0;
 
-	if(dataset_exists(gid, "InternalEnergy")) read_dataset_double_1d(gid, "InternalEnergy", n, u);
+	if(dataset_exists(gid, "InternalEnergy"))
+		read_dataset_double_1d(gid, "InternalEnergy", n, u);
+	else if(dataset_exists(gid, "InternalEnergies"))
+		read_dataset_double_1d(gid, "InternalEnergies", n, u);
 	else for(i=0;i<n;i++) u[i] = 0.0;
 
-	if(dataset_exists(gid, "SmoothingLength")) read_dataset_double_1d(gid, "SmoothingLength", n, hsml);
+	if(dataset_exists(gid, "SmoothingLength"))
+		read_dataset_double_1d(gid, "SmoothingLength", n, hsml);
+	else if(dataset_exists(gid, "SmoothingLengths"))
+		read_dataset_double_1d(gid, "SmoothingLengths", n, hsml);
 	else for(i=0;i<n;i++) hsml[i] = 0.0;
 
-	if(dataset_exists(gid, "Metallicity")) read_dataset_first_component(gid, "Metallicity", n, zmet);
+	if(dataset_exists(gid, "Metallicity"))
+		read_dataset_first_component(gid, "Metallicity", n, zmet);
+	else if(dataset_exists(gid, "MetalMassFractions"))
+		read_dataset_first_component(gid, "MetalMassFractions", n, zmet);
 	else for(i=0;i<n;i++) zmet[i] = 0.0;
 
 	gas = (GasType*)Malloc(sizeof(GasType)*n, PPTR(gas));
@@ -529,11 +623,14 @@ int rd_gadget_gas(RamsesType *ram, char *basename, int ifile){
 		gas[i].fx = gas[i].fy = gas[i].fz = 0.0;
 	}
 
+	/* Free temporaries BEFORE saving to ram->gas: the stack allocator updates
+	   the local `gas` pointer (via PtrToVariable/memmove) as each temp is freed.
+	   Saving ram->gas after frees captures the correct final address. */
+	Free(zmet); Free(hsml); Free(u); Free(rho); Free(m); Free(vz); Free(vy); Free(vx); Free(z); Free(y); Free(x);
 	ram->gas = gas;
 	ram->ngas = (int)n;
 	ram->nleafcell = (int)n;
 
-	Free(zmet); Free(hsml); Free(u); Free(rho); Free(m); Free(vz); Free(vy); Free(vx); Free(z); Free(y); Free(x);
 	H5Gclose(gid);
 	H5Fclose(file_id);
 	return ram->ngas;
@@ -542,13 +639,13 @@ int rd_gadget_gas(RamsesType *ram, char *basename, int ifile){
 int rd_gadget_bh(RamsesType *ram, char *basename, int ifile){
 	char filename[512];
 	hid_t file_id, header_id, gid;
-	double mass_table[GADGET_NTYPE];
+	double mass_table[8];
 	size_t n, i;
 	double *x,*y,*z,*vx,*vy,*vz,*mbh,*mdot;
 	idtype *ids;
 	SinkType *sink;
 
-	for(i=0;i<GADGET_NTYPE;i++) mass_table[i] = 0.0;
+	for(i=0;i<8;i++) mass_table[i] = 0.0;
 
 	if(open_snapshot_file(basename, ifile, filename, sizeof(filename), &file_id) != 0){
 		ERRORPRINT("Cannot open BH file from base '%s' at file %d\n", basename, ifile);
@@ -584,11 +681,18 @@ int rd_gadget_bh(RamsesType *ram, char *basename, int ifile){
 	read_dataset_vec3(gid, "Velocities", n, vx, vy, vz);
 	read_dataset_ids(gid, "ParticleIDs", n, ids);
 
-	if(dataset_exists(gid, "BH_Mass")) read_dataset_double_1d(gid, "BH_Mass", n, mbh);
-	else if(dataset_exists(gid, "Masses")) read_dataset_double_1d(gid, "Masses", n, mbh);
+	if(dataset_exists(gid, "BH_Mass"))
+		read_dataset_double_1d(gid, "BH_Mass", n, mbh);
+	else if(dataset_exists(gid, "SubgridMasses"))
+		read_dataset_double_1d(gid, "SubgridMasses", n, mbh);
+	else if(dataset_exists(gid, "Masses"))
+		read_dataset_double_1d(gid, "Masses", n, mbh);
 	else for(i=0;i<n;i++) mbh[i] = mass_table[5];
 
-	if(dataset_exists(gid, "BH_Mdot")) read_dataset_double_1d(gid, "BH_Mdot", n, mdot);
+	if(dataset_exists(gid, "BH_Mdot"))
+		read_dataset_double_1d(gid, "BH_Mdot", n, mdot);
+	else if(dataset_exists(gid, "AccretionRates"))
+		read_dataset_double_1d(gid, "AccretionRates", n, mdot);
 	else for(i=0;i<n;i++) mdot[i] = 0.0;
 
 	sink = (SinkType*)Malloc(sizeof(SinkType)*n, PPTR(sink));
@@ -612,10 +716,11 @@ int rd_gadget_bh(RamsesType *ram, char *basename, int ifile){
 		sink[i].id = ids[i];
 	}
 
+	/* Free temporaries BEFORE saving to ram->sink (same LIFO pointer reason as rd_gadget_gas) */
+	Free(ids); Free(mdot); Free(mbh); Free(vz); Free(vy); Free(vx); Free(z); Free(y); Free(x);
 	ram->sink = sink;
 	ram->nsink = (int)n;
 
-	Free(ids); Free(mdot); Free(mbh); Free(vz); Free(vy); Free(vx); Free(z); Free(y); Free(x);
 	H5Gclose(gid);
 	H5Fclose(file_id);
 	return ram->nsink;
