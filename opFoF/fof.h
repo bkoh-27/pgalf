@@ -15,11 +15,7 @@
 #else
 #	define POSTYPE float
 #endif
-/*
-enum boolean {YES=01, NO=02};
-#define YES '0'
-#define NO '1'
-*/
+enum boolean {NO=0, YES=1};
 typedef struct Box{
 	POSTYPE x,y,z;
 	POSTYPE width;

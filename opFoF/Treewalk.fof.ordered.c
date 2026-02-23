@@ -553,9 +553,16 @@ void ReadBottomFaceContact(FoFTPtlStruct *p,size_t npread, particle *alinked,int
 //#endif
 
 	sprintf(infile,"./FoF_Garbage/Garb.%.5d/BottomFaceContactHalo.%.5d.%.5d.dat",nstep,src,nstep);
-	if((fp=fopen(infile,"r")) == NULL){
+	fp=fopen(infile,"rb");
+	if(fp == NULL){
+		fp=fopen(infile,"wb");
+		if(fp != NULL) fclose(fp);
+		fp=fopen(infile,"rb");
+	}
+	if(fp == NULL){
 		fprintf(stderr,"error opening %s\n",infile);
-		exit(0);
+		free(linked);
+		return;
 	}
 //#ifdef OLD
 	for(j=0;j<mid;j++){

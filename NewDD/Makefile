@@ -7,9 +7,7 @@
 # Compiler settings (configured by ../configure)
 #--------------------------------------------------
 CC = mpiicx
-OPT = -g -DNENER=0 -DNPRE=8 -DNMEG=20000 -DWGROUPSIZE=5  -DUSE_MPI -DQUADHILBERT -DREAD_SINK -DNCHEM=9 -DNDUST=4 -DDEBUG=1 -DLOG=1
-FORMAT_OPT ?=
-OPT += $(FORMAT_OPT)
+OPT = -g -DNENER=0 -DNPRE=8 -DNMEG=20000 -DWGROUPSIZE=5  -DUSE_MPI -DQUADHILBERT -DREAD_SINK -DNCHEM=9 -DNDUST=4 -DDEBUG=1 -DLOG=1 -DGADGET_HDF5
 
 RANLIB = ranlib
 
@@ -18,20 +16,15 @@ CCLAGS = $(OPT)
 
 LIBS       = libmyram.a
 
-TIMEROBJ       = rd_amr.o  rd_info.o  rd_part.o header.o utils.o Memory2.o find_leaf_gas.o rd_hydro.o rd_sink.o
+TIMEROBJ       = rd_amr.o  rd_info.o  rd_part.o header.o utils.o Memory2.o find_leaf_gas.o rd_hydro.o rd_sink.o rd_gadget.o
 
 NEWDD	= newdd.exe
 NEWDDOBJ	= newdd.o
 
-INCLUDES = -I./ -I../
-HDF5_DIR ?= /usr/local
-HDF5_INC = -I$(HDF5_DIR)/include
-HDF5_LIB = -L$(HDF5_DIR)/lib -lhdf5
+HDF5_INC = /home/bkoh/miniconda3/envs/pgalf/include
+HDF5_LIB = /home/kjhan/local/lib
 
-ifneq (,$(findstring -DGADGET_HDF5,$(OPT)))
-TIMEROBJ += rd_gadget.o
-INCLUDES += $(HDF5_INC)
-endif
+INCLUDES = -I./ -I../ -I$(HDF5_INC)
 
 default:
 	$(MAKE) $(LIBS)
@@ -55,10 +48,7 @@ $(LIBS): $(TIMEROBJ)
 	ar -rcv $@ $?
 	ranlib $@
 
-OSTLIB = -L. -lmyram  -L/home/kjhan/local/lib -lm
-ifneq (,$(findstring -DGADGET_HDF5,$(OPT)))
-OSTLIB += $(HDF5_LIB)
-endif
+OSTLIB = -L. -lmyram  -L$(HDF5_LIB) -lhdf5 -Wl,-rpath,$(HDF5_LIB) -lm
 
 %.c:
 	$(CC) $(CFLAGS) -c $*.c

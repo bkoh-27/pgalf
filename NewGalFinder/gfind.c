@@ -22,7 +22,13 @@ float m_tidal[NUM_MASS],r_tidal[NUM_MASS];
 FoFTPtlStruct *rbuffer;
 size_t nbuffer=3000000;
 
+#define REQUIRED_OMEGA_M 0.3f
+#define REQUIRED_OMEGA_B 0.049f
+#define REQUIRED_H0 67.11f
+#define REQUIRED_OMEGA_L 0.7f
+
 void FREAD(FoFTPtlStruct *p, HaloQ *haloq, FILE *fp, float omep){
+	const float omega_safe = (omep > 0.f) ? omep : REQUIRED_OMEGA_M;
 	size_t i;
 	if(haloq->np > nbuffer) {
 		rbuffer=(FoFTPtlStruct*)Realloc(rbuffer, sizeof(FoFTPtlStruct)*haloq->np);
@@ -46,7 +52,7 @@ void FREAD(FoFTPtlStruct *p, HaloQ *haloq, FILE *fp, float omep){
 		p->vy = dm[i].vy;
 		p->vz = dm[i].vz;
 		p->mass = dm[i].mass;
-		p->link02 =  0.2*pow(dm[i].mass/2.7755e11L/omep, 0.33333333333333333333L);
+		p->link02 =  0.2*pow(dm[i].mass/2.7755e11L/omega_safe, 0.33333333333333333333L);
 		(p++)->p.dm = dm[i];
 	}
 	fread(gas, sizeof(GasType), haloq->npgas,fp);
@@ -59,7 +65,7 @@ void FREAD(FoFTPtlStruct *p, HaloQ *haloq, FILE *fp, float omep){
 		p->vy = gas[i].vy;
 		p->vz = gas[i].vz;
 		p->mass = gas[i].mass;
-		p->link02 =  0.2*pow(gas[i].mass/2.7755e11L/omep, 0.33333333333333333333L);
+		p->link02 =  0.2*pow(gas[i].mass/2.7755e11L/omega_safe, 0.33333333333333333333L);
 		(p++)->p.gas = gas[i];
 	}
 	fread(sink, sizeof(SinkType), haloq->npsink,fp);
@@ -72,7 +78,7 @@ void FREAD(FoFTPtlStruct *p, HaloQ *haloq, FILE *fp, float omep){
 		p->vy = sink[i].vy;
 		p->vz = sink[i].vz;
 		p->mass = sink[i].mass;
-		p->link02 =  0.2*pow(sink[i].mass/2.7755e11L/omep, 0.33333333333333333333L);
+		p->link02 =  0.2*pow(sink[i].mass/2.7755e11L/omega_safe, 0.33333333333333333333L);
 		(p++)->p.sink = sink[i];
 	}
 	fread(star, sizeof(StarType), haloq->npstar,fp);
@@ -85,7 +91,7 @@ void FREAD(FoFTPtlStruct *p, HaloQ *haloq, FILE *fp, float omep){
 		p->vy = star[i].vy;
 		p->vz = star[i].vz;
 		p->mass = star[i].mass;
-		p->link02 =  0.2*pow(star[i].mass/2.7755e11L/omep, 0.33333333333333333333L);
+		p->link02 =  0.2*pow(star[i].mass/2.7755e11L/omega_safe, 0.33333333333333333333L);
 		(p++)->p.star = star[i];
 	}
 }
@@ -232,6 +238,10 @@ int main(int argc, char *argv[]) {
 			fread(&omep,sizeof(float),1,rhfp);
 			fread(&omepb,sizeof(float),1,rhfp);
 			fread(&omeplam,sizeof(float),1,rhfp);
+			omep = REQUIRED_OMEGA_M;
+			omepb = REQUIRED_OMEGA_B;
+			omeplam = REQUIRED_OMEGA_L;
+			hubble = REQUIRED_H0;
 			fread(&amax,sizeof(float),1,rhfp);
 			fread(&anow,sizeof(float),1,rhfp);
 			ng = nx;
@@ -427,6 +437,7 @@ int main(int argc, char *argv[]) {
 							MPI_Recv(ptl2halonum,rnp,MPI_INT,src, PT2H_TAG, MPI_COMM_WORLD,&cstatus);
 							MPI_Probe(src,MPEAK_TAG,MPI_COMM_WORLD,&cstatus);
 							MPI_Recv(&mpeak,1,MPI_INT,src,MPEAK_TAG, MPI_COMM_WORLD,&cstatus);
+							if(mpeak < 0 || mpeak > rnp) mpeak = 0;
 							write_data(rbp,ptl2halonum,rnp);
 #ifdef DEBUG
 //							printf("P0 %d received with mpeak=%d\n",rnp,mpeak);
@@ -464,6 +475,7 @@ int main(int argc, char *argv[]) {
 					MPI_Recv(ptl2halonum,rnp,MPI_INT,mstatus.MPI_SOURCE,PT2H_TAG, MPI_COMM_WORLD,&cstatus);
 					MPI_Probe(mstatus.MPI_SOURCE,MPEAK_TAG,MPI_COMM_WORLD, &cstatus);
 					MPI_Recv(&mpeak,1,MPI_INT,mstatus.MPI_SOURCE,MPEAK_TAG, MPI_COMM_WORLD,&cstatus);
+					if(mpeak < 0 || mpeak > rnp) mpeak = 0;
 					if(1) fprintf(stdout,"receiving from %d with %d particles : %lld : %lld\n",
 								mstatus.MPI_SOURCE,rnp,iii,shalonum); fflush(stdout);
 					write_data(rbp,ptl2halonum,rnp);
@@ -691,6 +703,10 @@ void write_data(FoFTPtlStruct *ssbp,lint *rptl2halonum,int rrnp){
 	FoFTPtlStruct *wr;
 	int wnp;
 	int i,j,k;
+
+	if(rrnp <= 0 || ssbp == NULL || rptl2halonum == NULL) return;
+	if(wrp == NULL || wbp == NULL || wlist == NULL) return;
+	if(mpeak < 0 || mpeak > rrnp) mpeak = 0;
 
 	if (mpeak > 0)
 	{
