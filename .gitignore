@@ -26,3 +26,23 @@ work/production_runs/*/FoF_Garbage/
 work/production_runs/*/logs/
 work/production_runs/*/slurm/
 work/production_runs/STATUS.lock
+
+# Production run inputs and per-snapshot runtime sidecar outputs
+work/production_runs/*/snap_*.hdf5
+work/production_runs/*/runs/
+
+# Local push-transfer and diagnostics artifacts
+SWIFT.bundle
+swifts_patches/
+runs/PUSH_INSTRUCTIONS.md
+runs/SWIFT_bundle.sha256
+runs/swifts_patches.count
+runs/push_diagnostics.txt
+runs/codex_push_*.txt
+runs/ssh_*.out
+runs/ssh_*.err
+runs/REPO_HYGIENE_NOTE.md
+
+# Local analysis scratch area and generated mass-function output
+analysis/
+opFoF/mass_func_*.dat
