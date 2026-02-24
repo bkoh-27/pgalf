@@ -274,6 +274,7 @@ void SplitDump(RamsesType *ram, const void *aa, int np, int type, int istep, int
 			int ibin = (dump[i].x-x0)/step;
 			if(ibin <0 || ibin >= nsplit) {
 				ERRORPRINT("Error in ibin %d : %g %g %g\n",ibin,dump[i].x,x0,step);
+				continue;
 			}
 			ipos[ibin] = min(ipos[ibin], i);
 			jpos[ibin] = max(jpos[ibin], i);
@@ -286,9 +287,12 @@ void SplitDump(RamsesType *ram, const void *aa, int np, int type, int istep, int
 		StarType *dump = (StarType*)aa;
 		for(i=0;i<np;i++){
 			int ibin = (dump[i].x-x0)/step;
+			if(ibin <0 || ibin >= nsplit) {
+				ERRORPRINT("Error in ibin %d : %g %g %g\n",ibin,dump[i].x,x0,step);
+				continue;
+			}
 			ipos[ibin] = min(ipos[ibin], i);
 			jpos[ibin] = max(jpos[ibin], i);
-			if(ibin <0 || ibin >= nsplit) ERRORPRINT("Error in ibin %d : %g %g %g\n",ibin,dump[i].x,x0,step);
 		}
 		dsize = sizeof(StarType);
 		sprintf(outmiddle,"%s.STAR", outheader);
@@ -297,9 +301,12 @@ void SplitDump(RamsesType *ram, const void *aa, int np, int type, int istep, int
 		SinkType *dump = (SinkType*)aa;
 		for(i=0;i<np;i++){
 			int ibin = (dump[i].x-x0)/step;
+			if(ibin <0 || ibin >= nsplit) {
+				ERRORPRINT("Error in ibin %d : %g %g %g\n",ibin,dump[i].x,x0,step);
+				continue;
+			}
 			ipos[ibin] = min(ipos[ibin], i);
 			jpos[ibin] = max(jpos[ibin], i);
-			if(ibin <0 || ibin >= nsplit) ERRORPRINT("Error in ibin %d : %g %g %g\n",ibin,dump[i].x,x0,step);
 		}
 		dsize = sizeof(SinkType);
 		sprintf(outmiddle,"%s.SINK", outheader);
@@ -308,9 +315,12 @@ void SplitDump(RamsesType *ram, const void *aa, int np, int type, int istep, int
 		HydroCellType *dump = (HydroCellType*)aa;
 		for(i=0;i<np;i++){
 			int ibin = (dump[i].x-x0)/step;
+			if(ibin <0 || ibin >= nsplit) {
+				ERRORPRINT("Error in ibin %d : %g %g %g\n",ibin,dump[i].x,x0,step);
+				continue;
+			}
 			ipos[ibin] = min(ipos[ibin], i);
 			jpos[ibin] = max(jpos[ibin], i);
-			if(ibin <0 || ibin >= nsplit) ERRORPRINT("Error in ibin %d : %g %g %g\n",ibin,dump[i].x,x0,step);
 		}
 		dsize = sizeof(HydroCellType);
 		sprintf(outmiddle,"%s.HCELL", outheader);
@@ -319,9 +329,12 @@ void SplitDump(RamsesType *ram, const void *aa, int np, int type, int istep, int
 		GasType *dump = (GasType*)aa;
 		for(i=0;i<np;i++){
 			int ibin = (dump[i].x-x0)/step;
+			if(ibin <0 || ibin >= nsplit) {
+				ERRORPRINT("Error in ibin %d : %g %g %g\n",ibin,dump[i].x,x0,step);
+				continue;
+			}
 			ipos[ibin] = min(ipos[ibin], i);
 			jpos[ibin] = max(jpos[ibin], i);
-			if(ibin <0 || ibin >= nsplit) ERRORPRINT("Error in ibin %d : %g %g %g\n",ibin,dump[i].x,x0,step);
 		}
 		dsize = sizeof(GasType);
 		sprintf(outmiddle,"%s.GAS", outheader);

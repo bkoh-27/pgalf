@@ -66,56 +66,92 @@ int main(int argc, char **argv){
 	memset(&ram, 0, sizeof(RamsesType));
 
 #ifdef GADGET_HDF5
-	sprintf(basename,"./snapdir_%03d/snapshot_%03d", istep, istep);
-	if(rd_gadget_info(&ram, basename, 0) != 0){
-		sprintf(basename,"./snapshot_%03d", istep);
-		if(rd_gadget_info(&ram, basename, 0) != 0){
-			sprintf(basename,"./snap_%04d", istep);
-			if(rd_gadget_info(&ram, basename, 0) != 0){
-				fprintf(stderr, "Failed to locate snapshot base for step %d\n", istep);
-				return 2;
-			}
-		}
-	}
+	int gadget_found = 1;
 
 #ifdef USE_MPI
 	MPI_Init(&argc, &argv);
 	MPI_Comm_rank(MPI_COMM_WORLD,&myid);
 	MPI_Comm_size(MPI_COMM_WORLD,&nid);
+#endif
+
+	if(myid == 0){
+		sprintf(basename,"./snapdir_%03d/snapshot_%03d", istep, istep);
+		if(rd_gadget_info(&ram, basename, 0) != 0){
+			sprintf(basename,"./snapshot_%03d", istep);
+			if(rd_gadget_info(&ram, basename, 0) != 0){
+				sprintf(basename,"./snap_%04d", istep);
+				if(rd_gadget_info(&ram, basename, 0) != 0){
+					fprintf(stderr, "Failed to locate snapshot base for step %d\n", istep);
+					gadget_found = 0;
+				}
+			}
+		}
+	}
+
+#ifdef USE_MPI
+	MPI_Bcast(&gadget_found, 1, MPI_INT, 0, MPI_COMM_WORLD);
+	if(!gadget_found){
+		MPI_Finalize();
+		return 2;
+	}
+	MPI_Bcast(basename, 256, MPI_CHAR, 0, MPI_COMM_WORLD);
+	MPI_Bcast(&ram.nfiles, 1, MPI_INT, 0, MPI_COMM_WORLD);
 	if(myid != 0){
 		MPI_Finalize();
 		return 0;
 	}
+#else
+	if(!gadget_found) return 2;
 #endif
 
 	sinmul = 0;
 	printf("GADGET mode: reading base '%s' with %d file(s)\n", basename, ram.nfiles);
 	for(ifile=0;ifile<ram.nfiles;ifile++){
+#ifdef DEBUG
 		printf("P%d: Reading snapshot file index %d\n", myid, ifile); fflush(stdout);
+#endif
 		/* Allocations in order: particle, gas, sink */
 		rd_gadget_particles(&ram, basename, ifile);
+#ifdef DEBUG
 		printf("P%d: particles done npart=%d\n", myid, ram.npart); fflush(stdout);
+#endif
 		rd_gadget_gas(&ram, basename, ifile);
+#ifdef DEBUG
 		printf("P%d: gas done ngas=%d\n", myid, ram.ngas); fflush(stdout);
+#endif
 		rd_gadget_bh(&ram, basename, ifile);
+#ifdef DEBUG
 		printf("P%d: bh done nsink=%d\n", myid, ram.nsink); fflush(stdout);
+#endif
 
 		/* SplitDump output — order of writing doesn't matter */
 		if(ram.ngas > 0 && ram.gas != NULL){
+#ifdef DEBUG
 			printf("P%d: qsort GAS %d\n", myid, ram.ngas); fflush(stdout);
+#endif
 			qsort(ram.gas, ram.ngas, sizeof(GasType), gassortx);
+#ifdef DEBUG
 			printf("P%d: SplitDump GAS\n", myid); fflush(stdout);
+#endif
 			SplitDump(&ram, ram.gas, ram.ngas, GAS, istep, ifile+1, sinmul, nsplit);
+#ifdef DEBUG
 			printf("P%d: GAS done\n", myid); fflush(stdout);
+#endif
 		}
 
 #ifdef READ_SINK
 		if(ram.nsink > 0 && ram.sink != NULL){
+#ifdef DEBUG
 			printf("P%d: qsort SINK %d\n", myid, ram.nsink); fflush(stdout);
+#endif
 			qsort(ram.sink, ram.nsink, sizeof(SinkType), sinksortx);
+#ifdef DEBUG
 			printf("P%d: SplitDump SINK\n", myid); fflush(stdout);
+#endif
 			SplitDump(&ram, ram.sink, ram.nsink, SINK, istep, ifile+1, sinmul, nsplit);
+#ifdef DEBUG
 			printf("P%d: SINK done\n", myid); fflush(stdout);
+#endif
 		}
 #endif
 
@@ -126,7 +162,9 @@ int main(int argc, char **argv){
 			StarType *star;
 
 			/* dm is allocated on top of sink/gas/particle — freed first below */
+#ifdef DEBUG
 			printf("P%d: Malloc dm npart=%d\n", myid, ram.npart); fflush(stdout);
+#endif
 			dm = (DmType*)Malloc(sizeof(DmType)*ram.npart, PPTR(dm));
 			for(i=0;i<(size_t)ram.npart;i++){
 				if((ram.particle)[i].family ==1) {
@@ -135,10 +173,14 @@ int main(int argc, char **argv){
 				}
 			}
 			if(ndm > 0){
+#ifdef DEBUG
 				printf("P%d: SplitDump DM %zu\n", myid, ndm); fflush(stdout);
+#endif
 				qsort(dm, ndm, sizeof(DmType), dmsortx);
 				SplitDump(&ram, dm, (int)ndm, DM, istep, ifile+1, sinmul, nsplit);
+#ifdef DEBUG
 				printf("P%d: DM done\n", myid); fflush(stdout);
+#endif
 			}
 
 			star = (StarType*)dm;
@@ -149,18 +191,26 @@ int main(int argc, char **argv){
 				}
 			}
 			if(nstar > 0){
+#ifdef DEBUG
 				printf("P%d: SplitDump STAR %zu\n", myid, nstar); fflush(stdout);
+#endif
 				qsort(star, nstar, sizeof(StarType), starsortx);
 				SplitDump(&ram, star, (int)nstar, STAR, istep, ifile+1, sinmul, nsplit);
+#ifdef DEBUG
 				printf("P%d: STAR done\n", myid); fflush(stdout);
+#endif
 			}
 
+#ifdef DEBUG
 			printf("P%d: Free dm\n", myid); fflush(stdout);
+#endif
 			Free(dm);  /* dm is on top of the stack — free first */
 		}
 
 		/* Free in reverse allocation order (LIFO): sink → gas → particle */
+#ifdef DEBUG
 		printf("P%d: Free sink/gas/particle\n", myid); fflush(stdout);
+#endif
 		if(ram.sink != NULL)     { Free(ram.sink);     ram.sink     = NULL; ram.nsink = 0; }
 		if(ram.gas != NULL)      { Free(ram.gas);       ram.gas      = NULL; ram.ngas  = 0; }
 		if(ram.particle != NULL) { Free(ram.particle);  ram.particle = NULL; ram.npart = 0; }

@@ -8,6 +8,12 @@ RamsesType read_head(FILE*);
 #define S_STRING  "s"
 #define SET     "define "
 
+/* Required cosmology for SWIFT simulation family */
+#define REQUIRED_OMEGA_M  0.3f
+#define REQUIRED_OMEGA_B  0.049f
+#define REQUIRED_OMEGA_L  0.7f
+#define REQUIRED_H0       67.11f
+
 #define P_Starting  "#Start of the Ascii Header of the RAMSES Simulation\n"
 #define P_np        SET"nparticle           = %"S_INT"\n"
 #define P_nsink     SET"nsink               = %"S_INT"\n"

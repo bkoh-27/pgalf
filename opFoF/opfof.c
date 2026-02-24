@@ -8,6 +8,7 @@
 #include<limits.h>
 #include <mpi.h>
 #include "../ramses.h"
+#include "../params.h"
 #define DEFINE_SIM_PARA
 #include "pmheader.h"
 #undef DEFINE_SIM_PARA
@@ -24,14 +25,10 @@
 #define MAXNFILE 100000
 #define NLEN 190
 
-#define REQUIRED_OMEGA_M 0.3f
-#define REQUIRED_OMEGA_B 0.049f
-#define REQUIRED_H0 67.11f
-
 static void apply_required_cosmology(RamsesType *sp){
 	sp->omega_m = REQUIRED_OMEGA_M;
 	sp->omega_b = REQUIRED_OMEGA_B;
-	sp->omega_l = 1.0f - REQUIRED_OMEGA_M;
+	sp->omega_l = REQUIRED_OMEGA_L;
 	sp->omega_k = 0.0f;
 	sp->H0 = REQUIRED_H0;
 }

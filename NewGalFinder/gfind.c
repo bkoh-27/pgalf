@@ -15,6 +15,7 @@
 #include "tree.h"
 #include "defs.h"
 #include "hfind.h"
+#include "../params.h"
 static int tidal_start=1;
 float m_tidal[NUM_MASS],r_tidal[NUM_MASS];
 
@@ -22,10 +23,6 @@ float m_tidal[NUM_MASS],r_tidal[NUM_MASS];
 FoFTPtlStruct *rbuffer;
 size_t nbuffer=3000000;
 
-#define REQUIRED_OMEGA_M 0.3f
-#define REQUIRED_OMEGA_B 0.049f
-#define REQUIRED_H0 67.11f
-#define REQUIRED_OMEGA_L 0.7f
 
 void FREAD(FoFTPtlStruct *p, HaloQ *haloq, FILE *fp, float omep){
 	const float omega_safe = (omep > 0.f) ? omep : REQUIRED_OMEGA_M;
@@ -252,6 +249,7 @@ int main(int argc, char *argv[]) {
 	MPI_Bcast(&ng,1,MPI_INT,motherrank,MPI_COMM_WORLD);
 	MPI_Bcast(&nspace,1,MPI_INT,motherrank,MPI_COMM_WORLD);
 	MPI_Bcast(&omep,1,MPI_FLOAT,motherrank,MPI_COMM_WORLD);
+	MPI_Bcast(&omepb,1,MPI_FLOAT,motherrank,MPI_COMM_WORLD);
 	MPI_Bcast(&omeplam,1,MPI_FLOAT,motherrank,MPI_COMM_WORLD);
 	MPI_Bcast(&hubble,1,MPI_FLOAT,motherrank,MPI_COMM_WORLD);
 	MPI_Bcast(&size,1,MPI_FLOAT,motherrank,MPI_COMM_WORLD);

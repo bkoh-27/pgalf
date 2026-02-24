@@ -19,7 +19,7 @@ FC = mpiifx
 CC = mpiicx
 F90C = mpiifx
 #OPT = -DPGCC -mcmodel=medium -tp nehalem-64 -fast -mp -fastsse
-OPT = -DINTEL -g -fcommon
+OPT = -DINTEL -g
 
 INCLUDES = 
 

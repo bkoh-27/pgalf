@@ -86,12 +86,21 @@ static int dataset_exists(hid_t group_id, const char *name){
 }
 
 static int read_dataset_double_1d(hid_t group_id, const char *name, size_t n, double *out){
-	hid_t dataset_id;
+	hid_t dataset_id, space_id;
+	hsize_t dims[1];
 	dataset_id = H5Dopen2(group_id, name, H5P_DEFAULT);
 	if(dataset_id < 0) return -1;
+	space_id = H5Dget_space(dataset_id);
+	H5Sget_simple_extent_dims(space_id, dims, NULL);
+	H5Sclose(space_id);
+	if((size_t)dims[0] != n){
+		ERRORPRINT("Dataset '%s' has %llu elements, expected %zu\n",
+			   name, (unsigned long long)dims[0], n);
+		H5Dclose(dataset_id);
+		return -1;
+	}
 	H5Dread(dataset_id, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, out);
 	H5Dclose(dataset_id);
-	(void)n;
 	return 0;
 }
 
@@ -288,15 +297,8 @@ int rd_gadget_info(RamsesType *ram, char *basename, int ifile){
 		read_attr_double_array(header_id, "MassTable", tmp_mass);
 		for(i=0;i<6;i++) header.mass[i] = tmp_mass[i];
 	}
-	/* Time/Scale-factor: GADGET uses "Time" as scale factor;
-	   SWIFT "Time" is an internal coordinate — use "Scale-factor" instead */
+	/* Default: GADGET uses "Time" as scale factor. */
 	read_attr_double(header_id, "Time", &header.time);
-	{
-		double aexp_sw = 0.0;
-		if(read_attr_double(header_id, "Scale-factor", &aexp_sw) == 0
-		   && aexp_sw > 0.0 && aexp_sw <= 2.0)
-			header.time = aexp_sw;
-	}
 	read_attr_double(header_id, "Redshift", &header.redshift);
 	/* BoxSize: scalar in GADGET, 3-element array in SWIFT */
 	{
@@ -317,8 +319,6 @@ int rd_gadget_info(RamsesType *ram, char *basename, int ifile){
 	read_attr_double(header_id, "UnitMass_in_g", &header.unit_mass);
 	read_attr_double(header_id, "UnitVelocity_in_cm_per_s", &header.unit_velocity);
 
-	H5Gclose(header_id);
-
 	/* SWIFT: read physical unit system from InternalCodeUnits group */
 	header.is_swift = 0;
 	if(H5Lexists(file_id, "InternalCodeUnits", H5P_DEFAULT) > 0){
@@ -334,9 +334,17 @@ int rd_gadget_info(RamsesType *ram, char *basename, int ifile){
 				header.unit_mass     = U_M;
 				header.unit_velocity = U_L / U_t;
 				header.is_swift = 1;
+				/* SWIFT "Time" is internal coordinate; use Header Scale-factor instead */
+				{
+					double aexp_sw = 0.0;
+					if(read_attr_double(header_id, "Scale-factor", &aexp_sw) == 0
+					   && aexp_sw > 0.0 && aexp_sw <= 2.0)
+						header.time = aexp_sw;
+				}
 			}
 		}
 	}
+	H5Gclose(header_id);
 	H5Fclose(file_id);
 
 	if(header.nfiles < 1) header.nfiles = 1;
@@ -707,7 +715,8 @@ int rd_gadget_bh(RamsesType *ram, char *basename, int ifile){
 		sink[i].tbirth = 0.0;
 		sink[i].Jx = sink[i].Jy = sink[i].Jz = 0.0;
 		sink[i].Sx = sink[i].Sy = sink[i].Sz = 0.0;
-		sink[i].dMsmbh = mdot[i] * ram->scale_m;
+		/* AccretionRate in M_sun/h/Gyr */
+		sink[i].dMsmbh = mdot[i] * (ram->scale_m / ram->scale_Gyr);
 		sink[i].dMBH_coarse = 0.0;
 		sink[i].dMEd_coarse = 0.0;
 		sink[i].Esave = 0.0;

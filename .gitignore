@@ -1,0 +1,28 @@
+# Build artifacts
+*.o
+*.exe
+*.tmp
+
+# Local static libs built under subdirs
+NewDD/libmyram.a
+
+# Local/generated simulation outputs
+NewDD/FoF_Data/
+NewDD/snapdir_*/
+NewDD/test_run/
+NewDD/test_swift/
+NewDD/cmp_*/
+
+# Large analysis products
+analysis/plots/
+
+# Large runtime outputs (keep preprod/freeze evidence explicitly)
+runs/zoom*/
+runs/slurm/
+
+# Production execution bulk outputs
+work/production_runs/*/FoF_Data/
+work/production_runs/*/FoF_Garbage/
+work/production_runs/*/logs/
+work/production_runs/*/slurm/
+work/production_runs/STATUS.lock

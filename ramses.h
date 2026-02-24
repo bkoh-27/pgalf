@@ -99,7 +99,7 @@ typedef struct SinkType{
 	dptype tbirth; /* in ramses units */
 	dptype Jx,Jy,Jz; /* in [Msun/h km/second kpc] */
 	dptype Sx,Sy,Sz; /* in directional cosine */
-	dptype dMsmbh,dMBH_coarse,dMEd_coarse; /* in unit of Msun/h */
+	dptype dMsmbh,dMBH_coarse,dMEd_coarse; /* mass accreted (RAMSES) or accretion rate M_sun/h/Gyr (GADGET/SWIFT) */
 	dptype Esave,Smag,eps; /* in ramses units */
 //	dptype stat[2*NDIM+1][NLEVELS];  /* in ramses units */
 	int id;
@@ -274,22 +274,38 @@ typedef struct GadgetHeaderType{
 #define WHEREARG        __FILE__, __LINE__
 
 // stderr#  # # # #  # # . # #  # # #  # #  #  # #  # #  (##)
+#if defined(DEBUG) && DEBUG
 #define DEBUGPRINT(_fmt, ...) \
     do { \
-        if (DEBUG) { \
-            fprintf(stderr, WHERESTR _fmt, WHEREARG, ##__VA_ARGS__); \
-            fflush(stderr); \
-        } \
+        fprintf(stderr, WHERESTR _fmt, WHEREARG, ##__VA_ARGS__); \
+        fflush(stderr); \
     } while(0)
+#define DEBUGPRINT0(_fmt) \
+    do { \
+        fprintf(stderr, WHERESTR _fmt, WHEREARG); \
+        fflush(stderr); \
+    } while(0)
+#else
+#define DEBUGPRINT(_fmt, ...) do {} while(0)
+#define DEBUGPRINT0(_fmt) do {} while(0)
+#endif
 
 // stdout# #  # # # #  # # . # #  # # #  # #  #  # #  # #  (##)
+#if defined(LOG) && LOG
 #define LOGPRINT(_fmt, ...) \
     do { \
-        if (LOG) { \
-            fprintf(stdout, WHERESTR _fmt, WHEREARG, ##__VA_ARGS__); \
-            fflush(stdout); \
-        } \
+        fprintf(stdout, WHERESTR _fmt, WHEREARG, ##__VA_ARGS__); \
+        fflush(stdout); \
     } while(0)
+#define LOGPRINT0(_fmt) \
+    do { \
+        fprintf(stdout, WHERESTR _fmt, WHEREARG); \
+        fflush(stdout); \
+    } while(0)
+#else
+#define LOGPRINT(_fmt, ...) do {} while(0)
+#define LOGPRINT0(_fmt) do {} while(0)
+#endif
 
 // stderr (always prints, no conditional)
 #define ERRORPRINT(_fmt, ...) \

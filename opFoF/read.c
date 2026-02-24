@@ -5,13 +5,7 @@
 #include <mpi.h>
 #include "ramses.h"
 #include "fof.h"
-
-
-
-
-#define DEFINE_SIM_PARA
 #include "pmheader.h"
-#undef DEFINE_SIM_PARA
 #include "params.h"
 #define MP 1000000
 

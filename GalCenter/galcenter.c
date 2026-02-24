@@ -16,11 +16,7 @@
 #include "defs.h"
 #include "hfind.h"
 #include "galcenter.h"
-
-#define REQUIRED_OMEGA_M 0.3f
-#define REQUIRED_OMEGA_B 0.049f
-#define REQUIRED_H0 67.11f
-#define REQUIRED_OMEGA_L 0.7f
+#include "../params.h"
 
 FoFTPtlStruct *rbuffer;
 
@@ -227,11 +223,13 @@ int main(int argc, char *argv[]) {
 	MPI_Bcast(&ng,1,MPI_INT,motherrank,MPI_COMM_WORLD);
 	MPI_Bcast(&nspace,1,MPI_INT,motherrank,MPI_COMM_WORLD);
 	MPI_Bcast(&omep,1,MPI_FLOAT,motherrank,MPI_COMM_WORLD);
+	MPI_Bcast(&omepb,1,MPI_FLOAT,motherrank,MPI_COMM_WORLD);
 	MPI_Bcast(&omeplam,1,MPI_FLOAT,motherrank,MPI_COMM_WORLD);
 	MPI_Bcast(&hubble,1,MPI_FLOAT,motherrank,MPI_COMM_WORLD);
 	MPI_Bcast(&size,1,MPI_FLOAT,motherrank,MPI_COMM_WORLD);
 	MPI_Bcast(&amax,1,MPI_FLOAT,motherrank,MPI_COMM_WORLD);
 	MPI_Bcast(&a,1,MPI_FLOAT,motherrank,MPI_COMM_WORLD);
+	fprintf(stderr,"P%d omepb=%g before center computation\n",myid,omepb);
 	if(myid==motherrank){
 	}
 	rng = ng = nspace = 1; /* obsolite variables */
@@ -430,6 +428,12 @@ there:
 			}
 		}
 	}
+	if(myid == motherrank) {
+		Free(rbuffer);
+		Free(rbp);
+	}
+	Free(sbp);
+	if(myid == motherrank) fprintf(stdout,"Current memory stack %lld\n",(long long)CurMemStack());
 	if(myid == motherrank) fprintf(stdout,"End of calculation. Closing\n");
 	MPI_Barrier(MPI_COMM_WORLD);
 	MPI_Finalize();
@@ -443,4 +447,3 @@ void write_data(GalCenter rgalcenter){
 		output =(GalCenter*)realloc(output, sizeof(GalCenter)*ngalmax);
 	}
 }
-

@@ -25,26 +25,27 @@ int BIG_MPI_Send(const void *a, size_t ncount, MPI_Datatype datatype, int dest, 
 	else if(datatype == MPI_BYTE){
 		dsize = sizeof(char);
 	}
-	else if(datatype = MPI_INT){
+	else if(datatype == MPI_INT){
 		dsize = sizeof(int);
 	}
-	else if(datatype = MPI_FLOAT){
+	else if(datatype == MPI_FLOAT){
 		dsize = sizeof(float);
 	}
-	else if(datatype = MPI_LONG){
+	else if(datatype == MPI_LONG){
 		dsize = sizeof(long);
 	}
-	else if(datatype = MPI_DOUBLE){
+	else if(datatype == MPI_DOUBLE){
 		dsize = sizeof(double);
 	}
-	else if(datatype = MPI_LONG_LONG){
+	else if(datatype == MPI_LONG_LONG){
 		dsize = sizeof(long long);
 	}
-	else if(datatype = MPI_LONG_DOUBLE){
+	else if(datatype == MPI_LONG_DOUBLE){
 		dsize = sizeof(long double);
 	}
 	else {
-		fprintf(stderr,"Unidentified types of data in mpi_send\n");
+		fprintf(stderr,"Unknown MPI datatype in BIG_MPI_Send\n");
+		dsize = 1;
 	}
 //	printf("sending the Big-size Communication: ncount= %ld dest= %d \n", ncount, dest);
 	size_t worktodo = ncount;
@@ -67,26 +68,27 @@ int BIG_MPI_Recv(void *a, size_t ncount, MPI_Datatype datatype, int dest, int ta
 	else if(datatype == MPI_BYTE){
 		dsize = sizeof(char);
 	}
-	else if(datatype = MPI_INT){
+	else if(datatype == MPI_INT){
 		dsize = sizeof(int);
 	}
-	else if(datatype = MPI_FLOAT){
+	else if(datatype == MPI_FLOAT){
 		dsize = sizeof(float);
 	}
-	else if(datatype = MPI_LONG){
+	else if(datatype == MPI_LONG){
 		dsize = sizeof(long);
 	}
-	else if(datatype = MPI_DOUBLE){
+	else if(datatype == MPI_DOUBLE){
 		dsize = sizeof(double);
 	}
-	else if(datatype = MPI_LONG_LONG){
+	else if(datatype == MPI_LONG_LONG){
 		dsize = sizeof(long long);
 	}
-	else if(datatype = MPI_LONG_DOUBLE){
+	else if(datatype == MPI_LONG_DOUBLE){
 		dsize = sizeof(long double);
 	}
 	else {
-		fprintf(stderr,"Unidentified types of data in mpi_send\n");
+		fprintf(stderr,"Unknown MPI datatype in BIG_MPI_Recv\n");
+		dsize = 1;
 	}
 //	printf("receiving the Big-size Communication: ncount= %ld from= %d \n", ncount, dest);
 	size_t worktodo = ncount;
