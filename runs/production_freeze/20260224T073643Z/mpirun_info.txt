@@ -1,0 +1,4 @@
+/home/bkoh/.bash_profile: line 9: acd_func.sh: No such file or directory
+/opt/ohpc/pub/intel/oneapi-2025.03/mpi/2021.17/bin/mpirun
+Intel(R) MPI Library for Linux* OS, Version 2021.17 Build 20251009 (id: 0345ffb)
+Copyright 2003-2025, Intel Corporation.

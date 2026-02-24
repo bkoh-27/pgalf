@@ -1,0 +1,4 @@
+Attempt 1 failed during inline srun script due quoting/parsing error.
+Error tail:
+SIZE_BYTES=$(awk {print: -c: line 22: unexpected EOF while looking for matching `)'
+srun: error: grammar044: task 0: Exited with exit code 2

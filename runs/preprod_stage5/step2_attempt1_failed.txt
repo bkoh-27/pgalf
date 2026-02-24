@@ -1,0 +1,5 @@
+Attempt: initial Step 2 rebuild run via srun using output path /tmp/preprod_stage5 on compute node.
+Observed error output:
+/usr/bin/bash: line 14: /tmp/preprod_stage5/step2_env.txt: No such file or directory
+srun: error: grammar045: task 0: Exited with exit code 1
+Result: FAIL (transient path issue on compute node; command re-run with shared path /home/bkoh/pgalf/runs/preprod_stage5 and passed)

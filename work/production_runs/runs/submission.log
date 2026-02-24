@@ -1,0 +1,30 @@
+submitted_at=2026-02-24 16:55:02 KST (+0900)
+cmd: sbatch slurm/zoom_array.sbatch
+Submitted batch job 88474
+cmd: sbatch slurm/zoom2_array.sbatch
+Submitted batch job 88475
+cmd: sbatch slurm/zoom3_array.sbatch
+Submitted batch job 88476
+cmd: sbatch slurm/zoom4_array.sbatch
+Submitted batch job 88477
+note: initial tee target missing (work/production_runs/runs/); jobs were submitted successfully and this log was reconstructed immediately after.
+
+resubmitted_at=2026-02-24 16:57:42 KST (+0900)
+cmd: sbatch --array=0-274%16 slurm/zoom_array.sbatch
+Submitted batch job 89574
+cmd: sbatch --array=0-274%16 slurm/zoom2_array.sbatch
+Submitted batch job 89575
+cmd: sbatch --array=0-274%16 slurm/zoom3_array.sbatch
+Submitted batch job 89576
+cmd: sbatch --array=0-274%16 slurm/zoom4_array.sbatch
+Submitted batch job 89577
+
+resubmitted_after_modulefix_at=2026-02-24 17:00:11 KST (+0900)
+cmd: sbatch --array=0-274%16 slurm/zoom_array.sbatch
+Submitted batch job 89787
+cmd: sbatch --array=0-274%16 slurm/zoom2_array.sbatch
+Submitted batch job 89788
+cmd: sbatch --array=0-274%16 slurm/zoom3_array.sbatch
+Submitted batch job 89789
+cmd: sbatch --array=0-274%16 slurm/zoom4_array.sbatch
+Submitted batch job 89790

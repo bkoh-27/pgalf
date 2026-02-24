@@ -1,0 +1,52 @@
+--- Collective calls ---
+196:	MPI_Bcast(m_tidal,NUM_MASS,MPI_FLOAT,motherrank,MPI_COMM_WORLD);
+197:	MPI_Bcast(r_tidal,NUM_MASS,MPI_FLOAT,motherrank,MPI_COMM_WORLD);
+223:	MPI_Bcast(&ng,1,MPI_INT,motherrank,MPI_COMM_WORLD);
+224:	MPI_Bcast(&nspace,1,MPI_INT,motherrank,MPI_COMM_WORLD);
+225:	MPI_Bcast(&omep,1,MPI_FLOAT,motherrank,MPI_COMM_WORLD);
+226:	MPI_Bcast(&omepb,1,MPI_FLOAT,motherrank,MPI_COMM_WORLD);
+227:	MPI_Bcast(&omeplam,1,MPI_FLOAT,motherrank,MPI_COMM_WORLD);
+228:	MPI_Bcast(&hubble,1,MPI_FLOAT,motherrank,MPI_COMM_WORLD);
+229:	MPI_Bcast(&size,1,MPI_FLOAT,motherrank,MPI_COMM_WORLD);
+230:	MPI_Bcast(&amax,1,MPI_FLOAT,motherrank,MPI_COMM_WORLD);
+231:	MPI_Bcast(&a,1,MPI_FLOAT,motherrank,MPI_COMM_WORLD);
+432:	MPI_Barrier(MPI_COMM_WORLD);
+
+--- Broadcast block context ---
+   200		if(myid ==0) {
+   201			fprintf(stderr,"opening header file: %s", rheader);
+   202			rhfp = fopen(rheader,"r");
+   203			{
+   204				float bias;
+   205				float astep,anow;
+   206				int npower;
+   207	         	fread(&size,sizeof(float),1,rhfp);
+   208			 	fread(&hubble,sizeof(float),1,rhfp);
+   209				fread(&omep,sizeof(float),1,rhfp);
+   210				fread(&omepb,sizeof(float),1,rhfp);
+   211				fread(&omeplam,sizeof(float),1,rhfp);
+   212				omep = REQUIRED_OMEGA_M;
+   213				omepb = REQUIRED_OMEGA_B;
+   214				omeplam = REQUIRED_OMEGA_L;
+   215				hubble = REQUIRED_H0;
+   216				fread(&amax,sizeof(float),1,rhfp);
+   217				fread(&anow,sizeof(float),1,rhfp);
+   218				ng = nx;
+   219				a = anow;
+   220			}
+   221			fprintf(stderr," well open header file\n");
+   222		}
+   223		MPI_Bcast(&ng,1,MPI_INT,motherrank,MPI_COMM_WORLD);
+   224		MPI_Bcast(&nspace,1,MPI_INT,motherrank,MPI_COMM_WORLD);
+   225		MPI_Bcast(&omep,1,MPI_FLOAT,motherrank,MPI_COMM_WORLD);
+   226		MPI_Bcast(&omepb,1,MPI_FLOAT,motherrank,MPI_COMM_WORLD);
+   227		MPI_Bcast(&omeplam,1,MPI_FLOAT,motherrank,MPI_COMM_WORLD);
+   228		MPI_Bcast(&hubble,1,MPI_FLOAT,motherrank,MPI_COMM_WORLD);
+   229		MPI_Bcast(&size,1,MPI_FLOAT,motherrank,MPI_COMM_WORLD);
+   230		MPI_Bcast(&amax,1,MPI_FLOAT,motherrank,MPI_COMM_WORLD);
+   231		MPI_Bcast(&a,1,MPI_FLOAT,motherrank,MPI_COMM_WORLD);
+   232		fprintf(stderr,"P%d omepb=%g before center computation\n",myid,omepb);
+   233		if(myid==motherrank){
+   234		}
+   235		rng = ng = nspace = 1; /* obsolite variables */
+   236		nx = ny = nz = ng;

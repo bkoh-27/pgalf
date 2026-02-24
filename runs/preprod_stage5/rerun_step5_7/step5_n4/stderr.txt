@@ -1,0 +1,9 @@
+Initializing 5000 Mbytes memory space
+Initializing 5000 Mbytes memory space
+Initializing 5000 Mbytes memory space
+opening header file: ./FoF_Data/FoF.00000//FoF_halo_cat.00000Initializing 5000 Mbytes memory space
+ well open header file
+P0 omepb=0.049 before center computation
+P1 omepb=0.049 before center computation
+P2 omepb=0.049 before center computation
+P3 omepb=0.049 before center computation

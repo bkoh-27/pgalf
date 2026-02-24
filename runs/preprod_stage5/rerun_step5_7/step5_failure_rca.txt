@@ -1,0 +1,7 @@
+Step 5 failure persists after minimal print fix.
+Observed: rank-0 stdout prints "Current memory stack 3" (not 0).
+Likely cause: three long-lived allocations from Memory2 stack on root are not released before shutdown:
+- sbp allocated with Malloc at galcenter.c:260
+- rbp allocated with Malloc at galcenter.c:262
+- rbuffer allocated with Malloc at galcenter.c:283
+No corresponding stack-pop/free call is issued for these root allocations before final CurMemStack() print.

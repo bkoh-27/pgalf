@@ -1,0 +1,6 @@
+Initial attempt to run SLURM step without escalation failed in sandbox.
+Command class: srun --nodes=1 --ntasks=1 --cpus-per-task=8 bash -lc '<rerun script>'
+Error:
+srun: error: unable to initialize step launch listening socket: Operation not permitted
+srun: error: slurm_init_msg_engine_port error Operation not permitted
+srun: error: Unable to allocate resources: Operation not permitted

@@ -1,0 +1,35 @@
+B3_JOBID:88469
+B3_HOST:grammar044
+B3_WORKDIR:/home/bkoh/pgalf/runs/zoom3
+B3_SELECTED_NSTEP:00009
+B3_SELECTED_CANDIDATE:FoF_Data/FoF.00009/GALFIND.DATA.00009
+--- MODULE LIST ---
+
+Currently Loaded Modules:
+  1) intel/tbb/2022.3             4) intel/compiler-intel-llvm/2025.3.0
+  2) intel/compiler-rt/2025.3.0   5) intel/mpi/2021.17
+  3) intel/umf/1.0.2
+
+ 
+
+
+--- KEY ENV ---
+LOADEDMODULES=intel/tbb/2022.3:intel/compiler-rt/2025.3.0:intel/umf/1.0.2:intel/compiler-intel-llvm/2025.3.0:intel/mpi/2021.17
+PATH=/opt/ohpc/pub/intel/oneapi-2025.03/mpi/2021.17/opt/mpi/libfabric/bin:/opt/ohpc/pub/intel/oneapi-2025.03/mpi/2021.17/bin:/opt/ohpc/pub/intel/oneapi-2025.03/compiler/2025.3/bin:/opt/ohpc/pub/intel/oneapi-2025.03/compiler/2025.3/bin/compiler:/home/bkoh/.local/bin:/home/bkoh/.codex/tmp/arg0/codex-arg0VLvfLd:/home/bkoh/.vscode-server/cli/servers/Stable-072586267e68ece9a47aa43f8c108e0dcbf44622/server/bin/remote-cli:/home/bkoh/miniconda3/bin:/home/bkoh/miniconda3/condabin:/home/bkoh/bin:/usr/lib64/ccache:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/home/bkoh/.vscode-server/extensions/openai.chatgpt-0.4.76-linux-x64/bin/linux-x86_64
+LD_LIBRARY_PATH=/opt/ohpc/pub/intel/oneapi-2025.03/mpi/2021.17/opt/mpi/libfabric/lib:/opt/ohpc/pub/intel/oneapi-2025.03/mpi/2021.17/lib:/opt/ohpc/pub/intel/oneapi-2025.03/umf/1.0/lib:/opt/ohpc/pub/intel/oneapi-2025.03/compiler/2025.3/opt/compiler/lib:/opt/ohpc/pub/intel/oneapi-2025.03/compiler/2025.3/lib:/opt/ohpc/pub/intel/oneapi-2025.03/tbb/2022.3/lib
+MODULEPATH=/etc/scl/modulefiles:/opt/ohpc/pub/modulefiles
+
+--- MPIRUN ---
+MPIRUN_PATH=/opt/ohpc/pub/intel/oneapi-2025.03/mpi/2021.17/bin/mpirun
+Intel(R) MPI Library for Linux* OS, Version 2021.17 Build 20251009 (id: 0345ffb)
+Copyright 2003-2025, Intel Corporation.
+
+--- EXACT COMMANDS ---
+ls -lh FoF_Data/FoF.*/GALFIND.DATA.* | awk '$5 != "0" {print}' > b3_nonempty_candidates.txt
+mpirun -n 4 /home/bkoh/pgalf/GalCenter/galcenter.exe 00009 > b3_run1.out 2> b3_run1.err
+sha256sum FoF_Data/FoF.00009/GALFIND.CENTER.00009 > b3_run1.sha
+mpirun -n 4 /home/bkoh/pgalf/GalCenter/galcenter.exe 00009 > b3_run2.out 2> b3_run2.err
+sha256sum FoF_Data/FoF.00009/GALFIND.CENTER.00009 > b3_run2.sha
+diff b3_run1.sha b3_run2.sha
+grep "Current memory stack 0" b3_run1.out
+wc -c FoF_Data/FoF.00009/GALFIND.CENTER.00009

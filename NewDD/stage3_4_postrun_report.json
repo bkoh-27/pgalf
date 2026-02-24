@@ -1,0 +1,113 @@
+{
+  "zoomnull": {
+    "snapshots_total": 275,
+    "snapshots_complete": 275,
+    "missing_counts": {},
+    "missing_lists": {},
+    "aggregate": {
+      "halos": 128842,
+      "halo_mass_sum": 77177074097424464,
+      "halo_npstar_sum": 1639571,
+      "gfind_halos": 8011,
+      "galaxies": 8014,
+      "gfind_halo_nstar_sum": 140190,
+      "sub_npstar_sum": 106135,
+      "center_records": 8014,
+      "valid_gal_centers": 1191
+    },
+    "zero_galaxy_snapshots": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8
+    ]
+  },
+  "zoom2": {
+    "snapshots_total": 275,
+    "snapshots_complete": 275,
+    "missing_counts": {},
+    "missing_lists": {},
+    "aggregate": {
+      "halos": 140232,
+      "halo_mass_sum": 73702702400955360,
+      "halo_npstar_sum": 1575551,
+      "gfind_halos": 8758,
+      "galaxies": 8761,
+      "gfind_halo_nstar_sum": 120892,
+      "sub_npstar_sum": 76130,
+      "center_records": 8761,
+      "valid_gal_centers": 1065
+    },
+    "zero_galaxy_snapshots": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      9
+    ]
+  },
+  "zoom3": {
+    "snapshots_total": 275,
+    "snapshots_complete": 275,
+    "missing_counts": {},
+    "missing_lists": {},
+    "aggregate": {
+      "halos": 135305,
+      "halo_mass_sum": 73322795926360528,
+      "halo_npstar_sum": 1653347,
+      "gfind_halos": 8221,
+      "galaxies": 8230,
+      "gfind_halo_nstar_sum": 94921,
+      "sub_npstar_sum": 71723,
+      "center_records": 8230,
+      "valid_gal_centers": 886
+    },
+    "zero_galaxy_snapshots": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8
+    ]
+  },
+  "zoom4": {
+    "snapshots_total": 275,
+    "snapshots_complete": 275,
+    "missing_counts": {},
+    "missing_lists": {},
+    "aggregate": {
+      "halos": 144882,
+      "halo_mass_sum": 75517332674611408,
+      "halo_npstar_sum": 1751810,
+      "gfind_halos": 9583,
+      "galaxies": 9588,
+      "gfind_halo_nstar_sum": 149464,
+      "sub_npstar_sum": 122342,
+      "center_records": 9588,
+      "valid_gal_centers": 906
+    },
+    "zero_galaxy_snapshots": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ]
+  }
+}

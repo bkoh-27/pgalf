@@ -1,0 +1,9 @@
+/home/bkoh/.bash_profile: line 9: acd_func.sh: No such file or directory
+
+Currently Loaded Modules:
+  1) intel/tbb/2022.3             4) intel/compiler-intel-llvm/2025.3.0
+  2) intel/compiler-rt/2025.3.0   5) intel/mpi/2021.17
+  3) intel/umf/1.0.2
+
+ 
+

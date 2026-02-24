@@ -1,0 +1,84 @@
+rm -f galcenter.o Memory2.o  utils.o find_centers.o
+rm -f galcenter.exe
+\rm -f galcenter.exe
+make galcenter.exe
+make[1]: Entering directory '/home/bkoh/pgalf/GalCenter'
+mpiicx -DNMEG=5000L -D_LARGE_FILES  -g  -qopenmp -DINDEX -DVarPM   -DXYZDBL  -DQUADHILBERT -DNENER=0 -DNPRE=8 -DREAD_SINK -DNCHEM=9 -DNDUST=4  -c galcenter.c
+icx: remark: note that use of '-g' without any optimization-level option will turn off most compiler optimizations similar to use of '-O0'; use '-Rno-debug-disables-optimization' to disable this remark [-Rdebug-disables-optimization]
+galcenter.c:293:66: warning: format specifies type 'int' but the argument has type 'long long' [-Wformat]
+  293 |                                         if(numhalo%1000==0) printf("Now passing through %d:   %d\n",numhalo, snend);
+      |                                                                                         ~~          ^~~~~~~
+      |                                                                                         %lld
+./defs.h:62:17: note: expanded from macro 'numhalo'
+   62 | #define numhalo D_numhalo
+      |                 ^~~~~~~~~
+galcenter.c:294:66: warning: format specifies type 'int' but the argument has type 'long long' [-Wformat]
+  294 |                                         if(snp >= 5000000) printf("Now passing throught %d:   %d\n",numhalo, haloinfo.npall);
+      |                                                                                         ~~          ^~~~~~~
+      |                                                                                         %lld
+./defs.h:62:17: note: expanded from macro 'numhalo'
+   62 | #define numhalo D_numhalo
+      |                 ^~~~~~~~~
+galcenter.c:388:32: warning: format specifies type 'long' but the argument has type 'idtype' (aka 'int') [-Wformat]
+  388 |                                         fprintf(wp, "%ld %ld %d", rgalcenter.haloid,rgalcenter.subgalid, snp);
+      |                                                      ~~~          ^~~~~~~~~~~~~~~~~
+      |                                                      %d
+galcenter.c:388:50: warning: format specifies type 'long' but the argument has type 'idtype' (aka 'int') [-Wformat]
+  388 |                                         fprintf(wp, "%ld %ld %d", rgalcenter.haloid,rgalcenter.subgalid, snp);
+      |                                                          ~~~                        ^~~~~~~~~~~~~~~~~~~
+      |                                                          %d
+4 warnings generated.
+mpiicx -DNMEG=5000L -D_LARGE_FILES  -g  -qopenmp -DINDEX -DVarPM   -DXYZDBL  -DQUADHILBERT -DNENER=0 -DNPRE=8 -DREAD_SINK -DNCHEM=9 -DNDUST=4  -c Memory2.c
+icx: remark: note that use of '-g' without any optimization-level option will turn off most compiler optimizations similar to use of '-O0'; use '-Rno-debug-disables-optimization' to disable this remark [-Rdebug-disables-optimization]
+Memory2.c:23:38: warning: format specifies type 'long' but the argument has type 'INT8' (aka 'long long') [-Wformat]
+   23 |                         if(FREE) printf("Suceed in %ld\n",i*600L*MEGABYTE);
+      |                                                    ~~~    ^~~~~~~~~~~~~~~
+      |                                                    %lld
+Memory2.c:74:70: warning: format specifies type 'long' but the argument has type 'INT8' (aka 'long long') [-Wformat]
+   74 |                 fprintf(stderr,"Error when initializing %ld Mbytes memory space\n",size);
+      |                                                         ~~~                        ^~~~
+      |                                                         %lld
+Memory2.c:79:59: warning: format specifies type 'long' but the argument has type 'INT8' (aka 'long long') [-Wformat]
+   79 |                 fprintf(stderr,"Initializing %ld Mbytes memory space\n",size);
+      |                                              ~~~                        ^~~~
+      |                                              %lld
+Memory2.c:108:52: warning: format specifies type 'long' but the argument has type 'INT8' (aka 'long long') [-Wformat]
+  108 |                 printf("Warning : size %ld is being allocated\n",size);
+      |                                        ~~~                       ^~~~
+      |                                        %lld
+Memory2.c:119:64: warning: format specifies type 'long' but the argument has type 'INT8' (aka 'long long') [-Wformat]
+  119 |                 printf("change allocated memory size from infinity to %ld\n",size);
+      |                                                                       ~~~    ^~~~
+      |                                                                       %lld
+Memory2.c:135:68: warning: format specifies type 'long' but the argument has type 'INT8' (aka 'long long') [-Wformat]
+  135 |                 fprintf(stderr,"Error allocating memory %ld bytes in Malloc()\n",size);
+      |                                                         ~~~                      ^~~~
+      |                                                         %lld
+Memory2.c:139:49: warning: format specifies type 'long' but the argument has type 'INT8' (aka 'long long') [-Wformat]
+  139 |                 fprintf(stderr,"total memory is %ld Mbytes\n",tmptsize);
+      |                                                 ~~~           ^~~~~~~~
+      |                                                 %lld
+Memory2.c:235:34: warning: format specifies type 'long' but the argument has type 'INT8' (aka 'long long') [-Wformat]
+  235 |                 printf("%p  size of %ld\n",src,size);fflush(stdout);
+      |                                     ~~~        ^~~~
+      |                                     %lld
+Memory2.c:256:69: warning: format specifies type 'long' but the argument has type 'INT8' (aka 'long long') [-Wformat]
+  256 |                 fprintf(stderr,"Error allocating memory %ld bytes in Realloc()\n",size);
+      |                                                         ~~~                       ^~~~
+      |                                                         %lld
+Memory2.c:382:41: warning: format specifies type 'long' but the argument has type 'INT8' (aka 'long long') [-Wformat]
+  382 |                         printf("Now at stack # %ld in %ld\n",i,Current_Stack);fflush(stdout);
+      |                                                ~~~           ^
+      |                                                %lld
+Memory2.c:382:43: warning: format specifies type 'long' but the argument has type 'INT8' (aka 'long long') [-Wformat]
+  382 |                         printf("Now at stack # %ld in %ld\n",i,Current_Stack);fflush(stdout);
+      |                                                       ~~~      ^~~~~~~~~~~~~
+      |                                                       %lld
+11 warnings generated.
+mpiicx -DNMEG=5000L -D_LARGE_FILES  -g  -qopenmp -DINDEX -DVarPM   -DXYZDBL  -DQUADHILBERT -DNENER=0 -DNPRE=8 -DREAD_SINK -DNCHEM=9 -DNDUST=4  -c utils.c
+icx: remark: note that use of '-g' without any optimization-level option will turn off most compiler optimizations similar to use of '-O0'; use '-Rno-debug-disables-optimization' to disable this remark [-Rdebug-disables-optimization]
+mpiicx -DNMEG=5000L -D_LARGE_FILES  -g  -qopenmp -DINDEX -DVarPM   -DXYZDBL  -DQUADHILBERT -DNENER=0 -DNPRE=8 -DREAD_SINK -DNCHEM=9 -DNDUST=4  -c find_centers.c
+icx: remark: note that use of '-g' without any optimization-level option will turn off most compiler optimizations similar to use of '-O0'; use '-Rno-debug-disables-optimization' to disable this remark [-Rdebug-disables-optimization]
+mpiicx -g  -qopenmp -DINDEX -DVarPM   -DXYZDBL  -DQUADHILBERT -DNENER=0 -DNPRE=8 -DREAD_SINK -DNCHEM=9 -DNDUST=4 -mcmodel=medium  -o galcenter.exe galcenter.o Memory2.o  utils.o find_centers.o  -lm
+icx: remark: note that use of '-g' without any optimization-level option will turn off most compiler optimizations similar to use of '-O0'; use '-Rno-debug-disables-optimization' to disable this remark [-Rdebug-disables-optimization]
+make[1]: Leaving directory '/home/bkoh/pgalf/GalCenter'

@@ -1,0 +1,20 @@
+STEP3_JOBID:88463
+STEP3_HOST:grammar045
+--- MODULE LIST ---
+
+Currently Loaded Modules:
+  1) intel/tbb/2022.3             4) intel/compiler-intel-llvm/2025.3.0
+  2) intel/compiler-rt/2025.3.0   5) intel/mpi/2021.17
+  3) intel/umf/1.0.2
+
+ 
+
+--- KEY ENV ---
+LD_LIBRARY_PATH=/opt/ohpc/pub/intel/oneapi-2025.03/mpi/2021.17/opt/mpi/libfabric/lib:/opt/ohpc/pub/intel/oneapi-2025.03/mpi/2021.17/lib:/opt/ohpc/pub/intel/oneapi-2025.03/umf/1.0/lib:/opt/ohpc/pub/intel/oneapi-2025.03/compiler/2025.3/opt/compiler/lib:/opt/ohpc/pub/intel/oneapi-2025.03/compiler/2025.3/lib:/opt/ohpc/pub/intel/oneapi-2025.03/tbb/2022.3/lib
+LOADEDMODULES=intel/tbb/2022.3:intel/compiler-rt/2025.3.0:intel/umf/1.0.2:intel/compiler-intel-llvm/2025.3.0:intel/mpi/2021.17
+MODULEPATH=/etc/scl/modulefiles:/opt/ohpc/pub/modulefiles
+PATH=/opt/ohpc/pub/intel/oneapi-2025.03/mpi/2021.17/opt/mpi/libfabric/bin:/opt/ohpc/pub/intel/oneapi-2025.03/mpi/2021.17/bin:/opt/ohpc/pub/intel/oneapi-2025.03/compiler/2025.3/bin:/opt/ohpc/pub/intel/oneapi-2025.03/compiler/2025.3/bin/compiler:/home/bkoh/.local/bin:/home/bkoh/.codex/tmp/arg0/codex-arg0VLvfLd:/home/bkoh/.vscode-server/cli/servers/Stable-072586267e68ece9a47aa43f8c108e0dcbf44622/server/bin/remote-cli:/home/bkoh/miniconda3/bin:/home/bkoh/miniconda3/condabin:/home/bkoh/bin:/usr/lib64/ccache:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/home/bkoh/.vscode-server/extensions/openai.chatgpt-0.4.76-linux-x64/bin/linux-x86_64
+--- COMMANDS ---
+mpirun -n 1 /home/bkoh/pgalf/GalCenter/galcenter.exe 0
+mpirun -n 4 /home/bkoh/pgalf/GalCenter/galcenter.exe 0
+STEP3_STATUS:PASS

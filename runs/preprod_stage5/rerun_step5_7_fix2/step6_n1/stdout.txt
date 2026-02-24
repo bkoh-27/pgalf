@@ -1,0 +1,4 @@
+Opening ./FoF_Data/FoF.00000/GALFIND.DATA.00000 file for output
+complete................... 
+Current memory stack 0
+End of calculation. Closing

@@ -1,0 +1,2 @@
+--- n4 stdout ---
+--- n4 stderr ---
